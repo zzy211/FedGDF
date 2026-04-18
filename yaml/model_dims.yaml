@@ -1,0 +1,20 @@
+# dataset_model_config.yaml
+dataset_configs:
+  Cora:
+    generator_dims: [64, 128, 256, 512]
+  Cora-full:
+    generator_dims: [64, 128, 256, 512]
+  computers:
+    generator_dims: [64, 128, 256, 512]
+  Citeseer: 
+    generator_dims: [64, 128, 256, 512]
+  Cs: 
+    generator_dims: [64, 128, 512, 1024] 
+  Pubmed: 
+    generator_dims: [64, 128, 256] 
+  Physics:
+    generator_dims: [64, 128, 256, 512]
+  ogbn-arxiv: 
+    generator_dims: [64, 128, 256, 512, 256]  
+  Reddit:
+    generator_dims: [64, 128, 256, 512]

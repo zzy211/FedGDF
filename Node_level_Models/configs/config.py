@@ -1,0 +1,133 @@
+import argparse
+
+def args_parser():
+    parser = argparse.ArgumentParser(description="insert Arguments")
+    #已经核对
+    parser.add_argument('--proj_name', type=str, default="fedkd_heterogeneous", help='wandb logger project name')
+    parser.add_argument("--seed", type=int, default=10, help="seed")
+    parser.add_argument('--model', type=str, default='GCN', help='model',
+                        choices=['GCN', 'GAT', 'GraphSage', 'GIN', 'SagePlus', 'GCN_emb', 'GAT_emb'])
+    parser.add_argument('--alg_method', type=str, default="FedAvg", help='Federated Algorithms', choices=["FedAvg", "FedProx", "Local", "Fedproto", "Fedmd", "FedGH", "FedTAD", "FedGEN", "FGPL", "FedKD", "FedTug", "Fedtest", "Fedaug", "FedSHA", "MultiFedKD", "FedKD_low_cost", "FedTGP"])
+    parser.add_argument('--dataset', type=str, default='Reddit',
+                        help='Dataset',
+                        choices=['Cora', 'Citeseer', 'Pubmed', 'Flickr', 'ogbn-arxiv', 'Reddit', 'Reddit2',
+                                 'Yelp',"Cs","Physics","computers","photo",'ogbn-products','ogbn-proteins', 'Cora-full'])
+    parser.add_argument("--num_workers", type=int, default=5, help="number of clients")
+    parser.add_argument("--num_selected_ratio", type=float, default=1.0, help="ratio of clients randomly selected to participate in FL")
+    # parser.add_argument("--num_selected_models", type=int, default=5, help="num of clients randomly selected to participate in Federated Learning")
+    parser.add_argument('--overlapping_rate', type=float, default=0.0, choices=[0.0,0.1,0.2,0.3,0.4,0.5],
+                        help="Additional samples of overlapping data")
+    parser.add_argument('--gpu_id', type=int, default=0, help='device id cpu or gpu, if gpu_id = -1 use cpu')
+    parser.add_argument('--epochs', type=int, default=200,
+                        help='Number of epochs to train GNN model. the round of FL training.')
+    parser.add_argument("--inner_epochs", type=int, default=10, help="epochs for training")
+    parser.add_argument('--ratio_training', type=float, default=0.7, help='labels of ratio of training')
+    parser.add_argument('--ratio_testing', type=float, default=0.3, help='labels of ratio of testing')
+    parser.add_argument("--is_iid", type=str, default="iid", choices=["iid", "non-iid-louvain",'non-iid-Metis', 'non-iid-dirichlet', 'non-iid-graph-kernal'],
+                        help="split the graph into the clients: random is randomly split, louvain is the community detection method")
+    parser.add_argument("--target_acc", type=float, default=0.9, help='target accuracy')
+    parser.add_argument("--target_round", type=int, default=30, help='compare target accuracy and the accuarcy of the last target round')
+    parser.add_argument("--class_num", type=int, default=7, help="classification number of the task")
+    parser.add_argument("--dirichlet_alpha", type=float, default=1000, help="dirichlet factor, help to control non-iid degree")
+    parser.add_argument("--kernal_alpha", type=float, default=0, help="kernal factor, help to control non-iid degree of graph structure")
+    parser.add_argument("--same_size_dataset", type=int, default=0, help="1 means every client has the same size dataset")
+    parser.add_argument("--louvain_alpha", type=float, default=1.0, help="louvain factor, help to control non-iid degree of graph structure")
+    parser.add_argument("--num_pred", type=int, default=5, help="the maximum number of neighbors in FedSage")
+    parser.add_argument("--hidden_portion", type=float, default=0.1, help="the hidden nodes rate in FedSage")
+    parser.add_argument('--train_lr', type=float, default=0.01, help='Initial learning rate.')
+    parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
+    parser.add_argument('--max_send_neighbors', type=int, default=20, help='send features to server in FedSage algorithm')
+    parser.add_argument('--mu', type=float, default=0.01, help='proximal term constant in FedProx algorithm')
+    parser.add_argument("--norm_scale", type=float, default=10.0, help="norm scale of similarity matrix in FedPub, larger means larger impation in simi matrix")
+    parser.add_argument("--l1", type=float, default=1e-3, help="l1 in FedPub")
+    parser.add_argument('--laye-mask-one', type=bool, default=True, help="laye-mask-one in FedPub")
+    parser.add_argument('--clsf-mask-one', type=bool, default=True, help="clsf-mask-one in FedPub")
+    # parser.add_argument('--laye-mask-one', action='store_true', help="laye-mask-one in FedPub")
+    # parser.add_argument('--clsf-mask-one', action='store_true', help="clsf-mask-one in FedPub")
+    parser.add_argument('--hidden', type=int, default=32, help='Number of hidden units.')
+    parser.add_argument("--agg_method_fedcross", type=str, default="low_sim", help="choose client when agg in FedCross", choices=["min_sim", "max_sim"])
+    parser.add_argument('--alpha_agg', type=float, default=0.9, help="aggregation weight in FedCross")
+    parser.add_argument('--max_sim', type=int, default=1, help="the higher similarity, the higher weight")
+    # parser.add_argument("--cluster_embedding", action='store_true', help="cluster based on client embedding")
+    parser.add_argument("--cal_communication", action='store_true', help="calculate communication cost")
+    parser.add_argument("--cal_time", action='store_true', help="calculate time cost")
+    parser.add_argument("--layer_GAT", type=int, default=2, help="the number of layers in the GAT network")
+
+    #new_add_fedkd_zzy
+    parser.add_argument('--w_proto', type=float, default=0.2, help="weight of proto loss")
+    parser.add_argument('--public_dataset', type=str, default='Cora',
+                        help='Dataset',
+                        choices=['Cora', 'Citeseer', 'Pubmed', 'Flickr', 'ogbn-arxiv', 'Reddit', 'Reddit2',
+                                 'Yelp',"Cs","Physics","computers","photo",'ogbn-products','ogbn-proteins','Cora-full'])
+    parser.add_argument('--fedtad_mode', type=str, default='raw_distill', choices=['raw_distill', 'rep_distill'], help="The output is node features or node embeddings")
+    parser.add_argument('--glb_epochs', type=int, default=10, help='The number of training epochs for the generator model.')
+    parser.add_argument('--it_g', type=int, default=1, help='The number of training iterations of generator')
+    parser.add_argument('--it_d', type=int, default=1, help='The number of testing iterations of generator')
+    parser.add_argument('--lr_g', type=float, default=0.01, help="learning rate of generator model")
+    parser.add_argument('--lr_c', type=float, default=0.002, help="learning rate of discriminator model")
+    parser.add_argument('--num_gen', type=int, default=100, help="The number of generated nodes.")
+    parser.add_argument('--noise_dim', type=int, default=32, help='The dimensionality of the input noise')
+    parser.add_argument('--lam1', type=float, default=1, help="weight of sem loss of generator")
+    parser.add_argument('--lam2', type=float, default=1, help="weight of diversity loss of generator")
+    parser.add_argument('--lam_real', type=float, default=1, help="weight of real posibility of generator")
+    parser.add_argument('--lam3', type=float, default=0, help="weight of similarity between center")
+    parser.add_argument('--lam_edge', type=float, default=0, help="weight of edge loss")
+    parser.add_argument('--edge_density', type=float, default=0, help="weight of edge density")
+    parser.add_argument('--edge_entro', type=float, default=1, help="weight of edge entropy")
+    parser.add_argument('--topk', type=int, default=5, help="Select the top K most similar nodes as neighbors")
+    parser.add_argument('--sample_num', type=int, default=100, help="The number of sampled nodes of FGPL")
+    parser.add_argument('--weight_method', type=str, default='same_weight', choices=['same_weight', 'entroy_weight'])
+    parser.add_argument('--C', type=float, default=5.0, help='A temperature hyperparameter determines whether an edge is generated.')
+    parser.add_argument('--boost_w', type=float, default=2, help='same-label boost')
+    parser.add_argument("--draw_decision_bound", action='store_true', help="Draw a diagram of the decision boundary.")
+    parser.add_argument("--draw_proto", action='store_true', help="Draw a diagram of the proto")
+    parser.add_argument("--uniform_magnitude", action='store_true', help="Normalize the magnitude of the fake nodes to match the magnitude of the real nodes.")
+    parser.add_argument("--new_model", action='store_true', help="Simultaneously generate node features and edges.")
+    parser.add_argument("--edge_thre", type=float, default=0.8, help="Threshold for generating edges.")
+    parser.add_argument("--sim_loss_type", type=str, default="MSE", help="Distance between the local_center and the global_proto.",
+                        choices=['MSE', 'Cos_sim', 'InfoNCE'])
+    parser.add_argument("--lambda_", type=float, default=0.5, help="the weight of old parameters")
+    parser.add_argument("--ema_model", action='store_true', help="Use ema generator.")
+    parser.add_argument("--trigger_size", type=int, default=3, help="the size of trigger")
+    parser.add_argument("--attach_node_num", type=int, default=30, help="the number of attach node")
+    parser.add_argument("--local_train_trigger", action='store_true', help="Train the trigger locally.")
+    parser.add_argument("--local_train_trigger_iters", type=int, default=10, help="the round of train the trigger locally")
+    parser.add_argument("--disable_sertrain_trigger", action='store_true', help="Disable server-side training trigger")
+    parser.add_argument("--TEMP", type=float, default=1.0, help="temperature coefficient in KD.")
+    parser.add_argument("--ALPHA", type=float, default=0.5, help="the weight of soft loss in KD.")
+    parser.add_argument("--KD_train_iters", type=int, default=10, help="Training epochs for distillation learning.")
+    parser.add_argument("--random_public_dataset", action='store_true', help="Use random graphs as the public dataset.")
+    parser.add_argument("--use_GAN", action='store_true', help="It means we will use GAN to enhance the authenticity of the samples.")
+    parser.add_argument("--feat_dim", type=int, default=0, help="the feature of the dataset.")
+    parser.add_argument("--train_with_pseudo_label", type=int, default=0, help="train with pseudo label")
+    parser.add_argument('--fedtug_mode', type=str, default='raw_distill', choices=['raw_distill', 'rep_distill'], help="The output is node features or node embeddings")
+    parser.add_argument('--pred_mode', type=str, default='InfoNCE', choices=['nll', 'InfoNCE'], help='the type of pred loss function.')
+    parser.add_argument('--use_weight_prompt', type=int, default=0, help='Perform feature reweighting in local model.')
+    parser.add_argument('--pseudo_graph_clean', action='store_true', help='For initiating the cleaning of pseudo data.')
+    parser.add_argument('--clean_method', type=str, default='gmm', choices=['gmm', 'threshold'], help="Methods for filtering noisy samples.")
+    parser.add_argument('--cache_size', type=int, default=1, help='Size of server cache.')
+    parser.add_argument('--k_generators', type=int, default=3, help='the number of generator.')
+    parser.add_argument('--pseudo_num_per_time', type=int, default=1, help='the number of pseudo graphs generated each time.')
+    parser.add_argument('--generator_train_iters', type=int, default=10, help="Number of training rounds for the generator.")
+    parser.add_argument('--warmup', type=int, default=5, help="the start round of smote.")
+    parser.add_argument('--local_normalize', action='store_true', help="Initiating normalization of local content.")
+    parser.add_argument('--fixed_pseudo_graph_step', type=int, default=100, help="Starting round for using fixed pseudo-graphics.")
+    parser.add_argument('--top_ratio', type=float, default=0.7, help="The probability of a connection forming between nodes.")
+
+    #未核对
+    parser.add_argument("--hidden_channels", type=int, default=32, help="size of GNN hidden layer")
+    parser.add_argument("--learning_rate", type=float, default=0.01, help="learning rate for training")
+    parser.add_argument('--thrd', type=float, default=0.5)
+    parser.add_argument('--target_class', type=int, default=0)
+    parser.add_argument('--dropout', type=float, default=0.5,
+                        help='Dropout rate (1 - keep probability).')
+    
+    parser.add_argument('--glo_optimizer', type=str, default="Adam", help='the optimizer of global model in FedOPT')
+    parser.add_argument('--glo_lr', type=float, default=3e-4, help='the learning rate  of global model in FedOPT')
+    parser.add_argument('--max_grad_norm', type=float, default=100.0, help='max grad norm')
+    parser.add_argument('--scal_lr', type=float, default=0.01, help='the learning rate  of global model in FedOPT')
+    
+
+
+    args = parser.parse_args()
+    return args

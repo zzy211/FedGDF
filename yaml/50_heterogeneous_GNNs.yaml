@@ -1,0 +1,315 @@
+# GAT: 2 layers, 3 layers, 4 layers
+client_0:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_1:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_2:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+# GCN: 2 layers, 3 layers, 4 layers
+client_3:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 2
+client_4:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 3
+client_5:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 4
+# GraphSage: 2 layers, 3 layers, 4 layers
+client_6:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_7:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_8:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+client_9:
+  model:
+    name: GCN 
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+# GAT: 2 layers, 3 layers, 4 layers
+client_10:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_11:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_12:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+# GCN: 2 layers, 3 layers, 4 layers
+client_13:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 2
+client_14:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 3
+client_15:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 4
+# GraphSage: 2 layers, 3 layers, 4 layers
+client_16:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_17:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_18:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+client_19:
+  model:
+    name: GCN 
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+# GAT: 2 layers, 3 layers, 4 layers
+client_20:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_21:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_22:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+# GCN: 2 layers, 3 layers, 4 layers
+client_23:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 2
+client_24:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 3
+client_25:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 4
+# GraphSage: 2 layers, 3 layers, 4 layers
+client_26:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_27:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_28:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+client_29:
+  model:
+    name: GCN 
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+# GAT: 2 layers, 3 layers, 4 layers
+client_30:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_31:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_32:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+# GCN: 2 layers, 3 layers, 4 layers
+client_33:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 2
+client_34:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 3
+client_35:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 4
+# GraphSage: 2 layers, 3 layers, 4 layers
+client_36:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_37:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_38:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+client_39:
+  model:
+    name: GCN 
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+# GAT: 2 layers, 3 layers, 4 layers
+client_40:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_41:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_42:
+  model:
+    name: GAT
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+# GCN: 2 layers, 3 layers, 4 layers
+client_43:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 2
+client_44:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 3
+client_45:
+  model:
+    name: GCN
+    hidden: 32
+    dropout: 0.5
+    layer: 4
+# GraphSage: 2 layers, 3 layers, 4 layers
+client_46:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 2
+client_47:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 3
+client_48:
+  model:
+    name: GraphSage
+    hidden: 32
+    dropout: 0.1
+    layer: 4
+client_49:
+  model:
+    name: GCN 
+    hidden: 32
+    dropout: 0.1
+    layer: 2
