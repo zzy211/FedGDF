@@ -17,3 +17,5 @@ python run_node_task_main.py --dataset Cora --num_workers 20 --overlapping_rate 
 
 #FedTGP
 python run_node_task_main.py --dataset Cora --num_workers 20 --overlapping_rate 0.0 --is_iid iid --alg_method FedTGP --w_proto 0.5 --gpu_id 0
+
+#test
