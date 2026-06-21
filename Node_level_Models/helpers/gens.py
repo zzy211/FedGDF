@@ -126,7 +126,7 @@ def sampling_node_source(class_num_list, prev_out_local, idx_info_local, train_i
 
     for cls_idx, num in enumerate(sampling_list):
         # print(f"cls_idx: {cls_idx}, num: {num}")
-        num = int(num.item())
+        num = int(num.reshape(-1)[0].item())
         if num <= 0 or class_num_list[cls_idx] <= 0: 
             continue
         # first sampling Select source nodes (hard samples)
@@ -184,7 +184,7 @@ def sampling_test_node_source(class_num_list, prev_out_local, idx_info_local, tr
     src_idx_all = []
     dst_idx_all = []
     for cls_idx, num in enumerate(sampling_list):
-        num = int(num.item())
+        num = int(num.reshape(-1)[0].item())
         if num <= 0: 
             continue
         # first sampling Select source nodes (hard samples)

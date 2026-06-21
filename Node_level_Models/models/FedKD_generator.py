@@ -13,6 +13,7 @@ class FedKD_Generator(nn.Module):
         super(FedKD_Generator, self).__init__()
         self.noise_dim = noise_dim
         self.feat_dim = feat_dim
+        self.out_dim = out_dim
         self.combine_mode = combine_mode
 
         self.emb_layer = nn.Embedding(out_dim, out_dim)
@@ -51,24 +52,26 @@ class FedKD_Generator(nn.Module):
         self.nodes_logvar = nn.Linear(dims[-1], self.feat_dim)
 
         # New: Edge Predictor
-        self.edge_encoder = nn.Sequential(
-            nn.Linear(self.feat_dim, 128),
+        edge_hidden_dim = min(256, max(64, dims[-1]))
+        self.edge_node_encoder = nn.Sequential(
+            nn.Linear(self.feat_dim + dims[-1] + out_dim, edge_hidden_dim),
             nn.Tanh(),
-            nn.Linear(128, 64),
-            nn.Tanh()
+            nn.Dropout(dropout)
         )
         self._init_weights()
     
-        
     def reparameterize(self, mu, logvar, noise_scale=1):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std) * noise_scale
         return mu + eps * std
     
-    def predict_edges(self, node_features):
-        encoded_z = self.edge_encoder(node_features)  # [B, 32]
-        dot_product = torch.matmul(encoded_z, encoded_z.T)  # [B, B]
-        return dot_product
+    def predict_edges(self, node_features, node_hidden, class_embedding, labels):
+        edge_node_input = torch.cat([node_features, node_hidden, class_embedding], dim=-1)
+        edge_node_repr = self.edge_node_encoder(edge_node_input)
+        edge_node_repr = F.normalize(edge_node_repr, p=2, dim=1)
+        edge_logits = torch.matmul(edge_node_repr, edge_node_repr.T)
+        edge_logits = (edge_logits + edge_logits.T) / 2
+        return edge_logits
 
     def forward(self, z, c):
         B = z.size(0)
@@ -89,7 +92,7 @@ class FedKD_Generator(nn.Module):
         node_feats = F.normalize(node_feats, p=2, dim=1)
 
         # Compute edge probability matrix via dot product
-        adj_logits = self.predict_edges(node_feats)
+        adj_logits = self.predict_edges(node_feats, hid, c_emb, c)
         T = 1
         adj_matrix = torch.sigmoid(adj_logits * T)  # Convert to probabilities (between 0 and 1)
         adj_matrix = (adj_matrix + adj_matrix.T) / 2  # Ensure symmetry
@@ -110,10 +113,10 @@ class FedKD_Generator(nn.Module):
         init.normal_(self.nodes_logvar.bias, mean=0, std=0.01)
         
         # Initialize edge predictor weights
-        init.kaiming_normal_(self.edge_encoder[0].weight, mode='fan_in', nonlinearity='relu')
-        init.normal_(self.edge_encoder[0].bias, mean=0, std=0.01)
-        init.xavier_normal_(self.edge_encoder[2].weight, gain=nn.init.calculate_gain('tanh'))
-        init.normal_(self.edge_encoder[2].bias, mean=0, std=0.01)
+        for module in list(self.edge_node_encoder):
+            if isinstance(module, nn.Linear):
+                init.xavier_normal_(module.weight, gain=nn.init.calculate_gain('tanh'))
+                init.normal_(module.bias, mean=0, std=0.01)
         
         # Initialize embedding layer weights
         init.normal_(self.emb_layer.weight, mean=0, std=0.01)

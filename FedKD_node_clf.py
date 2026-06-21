@@ -77,7 +77,7 @@ def get_idx_info(label, n_cls, train_mask):
         idx_info.append(cls_indices)
     return idx_info
 
-def construct_graph_with_adj(node_logits, adj_logits, real_labels, top_ratio=0.75):
+def construct_graph_with_adj(node_logits, adj_logits, real_labels, add_edge_mode, avg_degree=None, k_diff=5, gumbel_tau=0.5, gumbel_eps=1e-10, score_scale=10.0):
     """
     Construct the graph data structure where nodes of the same class are connected by edges (including self-loops),
     and extract edge weights from adj_logits.
@@ -85,38 +85,80 @@ def construct_graph_with_adj(node_logits, adj_logits, real_labels, top_ratio=0.7
         node_logits (Tensor): Node feature matrix with shape [num_nodes, num_features]
         adj_logits (Tensor): Edge weight matrix with shape [num_nodes, num_nodes]
         real_labels (Tensor): Ground truth labels of nodes with shape [num_nodes]
-        
+        avg_degree (float): Average degree of the graph.
+        k_diff (int): Number of cross-class neighbors to keep..
+        gumbel_tau (float): Temperature for the soft Gumbel-Top-K relaxation.
+        gumbel_eps (float): Small constant for numerical stability.
+        score_scale (float): Scale for the scores in edge sampling.
     Returns:
         Data: PyG Data object containing node features, edge indices and edge weights
     """
     num_nodes = real_labels.size(0)
-    # Flatten and sort (ignore diagonal elements since self-loops are processed separately)
-    non_diag_mask = ~torch.eye(num_nodes, dtype=torch.bool, device=adj_logits.device)
-    non_diag_values = adj_logits[non_diag_mask].flatten()
-    # Calculate the index at the 1/4 position
-    k = max(1, int(len(non_diag_values) * top_ratio))
-    # Get the threshold for the top 1/4 (i.e., the k-th smallest value after sorting)
-    edge_thre = torch.kthvalue(non_diag_values, k).values.item()
-    edge_index = [[], []]
-    edge_weight = []
-    for i in range(num_nodes):
-        for j in range(num_nodes):
-            if i == j:
-                weight = 1.0
-            elif real_labels[i] == real_labels[j] and adj_logits[i][j] > edge_thre:
-                weight = adj_logits[i][j]
-            else:
-                weight = 0
+    labels = real_labels.view(-1)
+    if avg_degree is None:
+        avg_degree = 5.0
+    k_same_base = max(1, int(round(float(avg_degree))))
+    k_diff = max(0, int(k_diff))
+    
+    edge_dict = {}
+    def add_edge(src, dst, weight):
+        key = (int(src), int(dst))
+        if key not in edge_dict:
+            edge_dict[key] = weight
+        else:
+            edge_dict[key] = torch.maximum(edge_dict[key], weight)
+    
+    def gumbel_topk_weights(scores, k):
+        uniform = torch.rand_like(scores).clamp_(min=gumbel_eps, max=1.0 - gumbel_eps)
+        gumbel_noise = -torch.log(-torch.log(uniform))
+        perturbed_scores = score_scale * scores + gumbel_noise
+        _, top_pos = torch.topk(perturbed_scores, k=k)
 
-            if weight != 0:
-                edge_index[0].append(i)
-                edge_index[1].append(j)
-                edge_weight.append(weight)
+        hard_mask = torch.zeros_like(scores)
+        hard_mask[top_pos] = 1.0
+        soft_mask = torch.softmax(perturbed_scores / gumbel_tau, dim=0)
+        st_mask = hard_mask.detach() - soft_mask.detach() + soft_mask
+        return top_pos, st_mask
+    
+    
+    def add_selected_edges(src, candidates, k_select):
+        if k_select <= 0 or candidates.numel() == 0:
+            return
+        k_select = min(k_select, candidates.numel())
+        scores = adj_logits[src, candidates]
+        top_pos, edge_mask = gumbel_topk_weights(scores, k_select)
+        for pos in top_pos:
+            dst = candidates[pos]
+            weight = adj_logits[src, dst] * edge_mask[pos]
+            add_edge(src, dst, weight)
+            add_edge(dst, src, weight)
+
+    for i in range(num_nodes):
+        add_edge(i, i, adj_logits.new_tensor(1.0))
+
+        if add_edge_mode == "same_class_only":
+            same_candidates = torch.where(labels == labels[i])[0]
+            same_candidates = same_candidates[same_candidates != i]
+            add_selected_edges(i, same_candidates, k_same_base)
+
+        if add_edge_mode == "all_candidate_topk":
+            candidates = torch.arange(num_nodes, device=adj_logits.device)
+            candidates = candidates[candidates != i]
+            add_selected_edges(i, candidates, k_same_base)
+
+        if add_edge_mode == "diff_class_only" and k_diff > 0:
+            diff_candidates = torch.where(labels != labels[i])[0]
+            add_selected_edges(i, diff_candidates, k_diff)
+
+    edge_items = sorted(edge_dict.items())
+    edge_index = [[src for (src, _), _ in edge_items], [dst for (_, dst), _ in edge_items]]
+    edge_weight = [weight for _, weight in edge_items]
+
     # Create PyG Data object
     graph = Data(
         x=node_logits,
-        edge_index=torch.tensor(edge_index),
-        edge_weight=torch.tensor(edge_weight),
+        edge_index=torch.tensor(edge_index, dtype=torch.long, device=adj_logits.device),
+        edge_weight=torch.stack(edge_weight).to(adj_logits.device),
         y=real_labels
     )
     return graph
@@ -408,7 +450,7 @@ def main(args, logger):
             #1.1 Generate public dataset
             z = torch.randn((args.sample_num, args.noise_dim)).to(device)
             node_logits, adj_matrix, z_c = generator.forward(z=z, c=label_distribution)
-            pseudo_graph = construct_graph_with_adj(node_logits=node_logits.detach(), adj_logits=adj_matrix.detach(), real_labels=label_distribution, top_ratio=args.top_ratio)
+            pseudo_graph = construct_graph_with_adj(node_logits=node_logits.detach(), adj_logits=adj_matrix.detach(), real_labels=label_distribution, avg_degree=args.avg_degree, add_edge_mode=args.add_edge_mode, k_diff=args.k_diff, score_scale=args.score_scales)
 
             #1.2 Clean the generated public dataset
             if args.pseudo_graph_clean:
@@ -692,10 +734,10 @@ def main(args, logger):
             generator_optimizer.zero_grad()
             z = torch.randn((args.sample_num, args.noise_dim)).to(device)
             node_logits, adj_matrix, z_c = generator.forward(z=z, c=label_distribution)
-            pseudo_graph = construct_graph_with_adj(node_logits=node_logits, adj_logits=adj_matrix, real_labels=label_distribution, top_ratio=args.top_ratio)
+            pseudo_graph = construct_graph_with_adj(node_logits=node_logits, adj_logits=adj_matrix, real_labels=label_distribution, avg_degree=args.avg_degree, add_edge_mode=args.add_edge_mode, k_diff=args.k_diff, score_scale=args.score_scales)
             for client_id in range(args.num_workers):
                 local_model_list[client_id].eval()
-                local_pred, local_proto, local_logits = local_model_list[client_id].forward(pseudo_graph.x.to(device), pseudo_graph.edge_index.to(device), None)
+                local_pred, local_proto, local_logits = local_model_list[client_id].forward(pseudo_graph.x.to(device), pseudo_graph.edge_index.to(device), pseudo_graph.edge_weight.to(device))
                 loss_sem += 1/(args.num_workers) * nn.CrossEntropyLoss()(local_pred, label_distribution)
                 
             loss_div = ContrastiveDiversityLoss(temperature=0.1, metric='cosine').to(device)(local_proto, z)

@@ -113,6 +113,9 @@ def args_parser():
     parser.add_argument('--local_normalize', action='store_true', help="Initiating normalization of local content.")
     parser.add_argument('--fixed_pseudo_graph_step', type=int, default=100, help="Starting round for using fixed pseudo-graphics.")
     parser.add_argument('--top_ratio', type=float, default=0.7, help="The probability of a connection forming between nodes.")
+    parser.add_argument('--k_diff', type=int, default=2, help="the number of cross-class neighbors to keep when constructing the graph.")
+    parser.add_argument('--score_scales', type=float, default=10.0, help="the score scale for edge sampling when constructing the graph.")
+    parser.add_argument('--add_edge_mode', type=str, default='same_class_only', choices=['same_class_only', 'diff_class_only', 'all_candidate_topk'], help="the mode of adding edges when constructing the graph.")
 
     #未核对
     parser.add_argument("--hidden_channels", type=int, default=32, help="size of GNN hidden layer")
