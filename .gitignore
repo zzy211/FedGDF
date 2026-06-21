@@ -1,2 +1,8 @@
 #ignore
 /data/
+/wandb/
+/script/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
